@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="tg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ҳисоби маблағ</title>
+<style>
+body {
+  font-family: Arial;
+  background: #f1f5f9;
+  padding: 15px;
+}
+.box {
+  background: white;
+  padding: 20px;
+  border-radius: 15px;
+  margin-bottom: 15px;
+}
+h2 {text-align:center;color:#166534}
+input,select,button {
+  width:100%;
+  padding:13px;
+  margin:7px 0;
+  box-sizing:border-box;
+  border-radius:8px;
+  border:1px solid #ccc;
+  font-size:16px;
+}
+button {
+  background:#15803d;
+  color:white;
+  border:0;
+}
+.balance {
+  font-size:27px;
+  color:#15803d;
+  text-align:center;
+  font-weight:bold;
+}
+.item {
+  border-bottom:1px solid #ddd;
+  padding:10px;
+}
+</style>
+</head>
+<body>
+
+<div class="box">
+<h2>ҲИСОБИ МАБЛАҒ</h2>
+<p>Бақияи маблағ:</p>
+<div class="balance" id="balance">0 сомонӣ</div>
+</div>
+
+<div class="box">
+<h3>Илова кардани маблағ</h3>
+
+<input id="name" placeholder="Ном ё шарҳ">
+
+<input id="amount" type="number"
+placeholder="Маблағ (сомонӣ)">
+
+<select id="type">
+<option value="in">Даромад</option>
+<option value="out">Хароҷот</option>
+</select>
+
+<button onclick="add()">Сабт кардан</button>
+</div>
+
+<div class="box">
+<h3>Ҳисобот</h3>
+<p>Даромад: <b id="income">0</b> сомонӣ</p>
+<p>Хароҷот: <b id="expense">0</b> сомонӣ</p>
+</div>
+
+<div class="box">
+<h3>Таърихи амалиёт</h3>
+<div id="list"></div>
+</div>
+
+<script>
+let data = JSON.parse(localStorage.getItem("hisob")) || [];
+
+function add() {
+ let name = document.getElementById("name").value;
+ let amount = Number(document.getElementById("amount").value);
+ let type = document.getElementById("type").value;
+
+ if (!amount || amount <= 0) {
+   alert("Маблағро дуруст нависед");
+   return;
+ }
+
+ data.push({name,amount,type});
+ localStorage.setItem("hisob",JSON.stringify(data));
+
+ document.getElementById("name").value="";
+ document.getElementById("amount").value="";
+ show();
+}
+
+function show() {
+ let income=0, expense=0, html="";
+
+ data.forEach((x,i)=>{
+   if(x.type==="in") income+=x.amount;
+   else expense+=x.amount;
+
+   html+=`<div class="item">
+   ${x.name || "Амалиёт"} — ${x.amount} сомонӣ
+   <button onclick="removeItem(${i})">Нест кардан</button>
+   </div>`;
+ });
+
+ document.getElementById("balance").innerText=
+ (income-expense)+" сомонӣ";
+ document.getElementById("income").innerText=income;
+ document.getElementById("expense").innerText=expense;
+ document.getElementById("list").innerHTML=html;
+}
+
+function removeItem(i) {
+ data.splice(i,1);
+ localStorage.setItem("hisob",JSON.stringify(data));
+ show();
+}
+
+show();
+</script>
+
+</body>
+</html>
