@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="tg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ҳисоби маблағҳо 3</title>
+<style>
+*{box-sizing:border-box}
+body{
+ font-family:Arial,sans-serif;
+ background:#f1f5f9;
+ margin:0;padding:15px;color:#1e293b
+}
+.container{max-width:600px;margin:auto}
+header{
+ background:#14532d;color:white;
+ padding:20px;border-radius:14px;
+ text-align:center;margin-bottom:15px
+}
+.card{
+ background:white;padding:16px;
+ border-radius:12px;margin-bottom:13px;
+ box-shadow:0 2px 7px #0001
+}
+input,select,button{
+ width:100%;padding:12px;margin:6px 0;
+ border:1px solid #cbd5e1;
+ border-radius:8px;font-size:16px
+}
+button{
+ background:#15803d;color:white;
+ border:0;font-weight:bold;cursor:pointer
+}
+.red{background:#dc2626}
+.blue{background:#2563eb}
+.orange{background:#ea580c}
+.hidden{display:none}
+.stat{
+ display:flex;justify-content:space-between;
+ padding:10px;border-bottom:1px solid #eee
+}
+.item{
+ padding:12px;background:#f8fafc;
+ border-radius:8px;margin:8px 0;
+ border-left:4px solid #15803d
+}
+.small{font-size:13px;color:#64748b}
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+<h2>ҲИСОБИ МАБЛАҒҲО</h2>
+<p>Ҳисоботи ҳамсинфон</p>
+</header>
+
+<div id="login" class="card">
+<h3>Воридшавӣ</h3>
+<select id="role">
+<option value="admin">Администратор</option>
+<option value="cashier">Хазинадор</option>
+</select>
+<input id="password" type="password" placeholder="Рамзи воридшавӣ">
+<button onclick="login()">Даромадан</button>
+<p class="small">Администратор: 1111 | Хазинадор: 2222</p>
+</div>
+
+<div id="app" class="hidden">
+
+<div class="card">
+<h3>📊 Ҳисоботи умумӣ</h3>
+<div class="stat"><span>Ҳамагӣ ворид шуд:</span><b id="totalIn">0</b></div>
+<div class="stat"><span>Хароҷот:</span><b id="totalOut">0</b></div>
+<div class="stat"><span>Бақияи умумӣ:</span><b id="balance">0</b></div>
+<div class="stat"><span>Чекҳои интизори тасдиқ:</span><b id="pending">0</b></div>
+</div>
+
+<div class="card">
+<h3>👥 Ҳамсинфон</h3>
+<div id="people"></div>
+<div id="adminAdd">
+<input id="newName" placeholder="Номи ҳамсинф">
+<button onclick="addPerson()">+ Илова кардани ҳамсинф</button>
+</div>
+</div>
+
+<div class="card">
+<h3>💰 Сабти маблағ</h3>
+<select id="person"></select>
+<input id="amount" type="number" placeholder="Маблағ (сомонӣ)">
+<input id="description" placeholder="Шарҳ">
+<button onclick="addIncome()">Сабти маблағ</button>
+</div>
+
+<div class="card">
+<h3>➖ Сабти хароҷот</h3>
+<input id="expenseAmount" type="number" placeholder="Маблағ (сомонӣ)">
+<input id="expenseReason" placeholder="Сабаби хароҷот">
+<button class="orange" onclick="addExpense()">Сабти хароҷот</button>
+</div>
+
+<div class="card">
+<h3>🧾 Чекҳо</h3>
+<input id="receiptPerson" placeholder="Номи ҳамсинф">
+<input id="receiptAmount" type="number" placeholder="Маблағ">
+<input id="receiptPhoto" type="file" accept="image/*">
+<button class="blue" onclick="addReceipt()">Фиристодани чек</button>
+<div id="receipts"></div>
+</div>
+
+<div class="card">
+<h3>📋 Таърихи амалиёт</h3>
+<div id="history"></div>
+</div>
+
+<button class="red" onclick="logout()">Баромадан</button>
+</div>
+</div>
+
+<script>
+let people=JSON.parse(localStorage.getItem("people")||"[]");
+let incomes=JSON.parse(localStorage.getItem("incomes")||"[]");
+let expenses=JSON.parse(localStorage.getItem("expenses")||"[]");
+let receipts=JSON.parse(localStorage.getItem("receipts")||"[]");
+let currentRole="";
+
+function save(){
+ localStorage.setItem("people",JSON.stringify(people));
+ localStorage.setItem("incomes",JSON.stringify(incomes));
+ localStorage.setItem("expenses",JSON.stringify(expenses));
+ localStorage.setItem("receipts",JSON.stringify(receipts));
+ render();
+}
+
+function login(){
+ let r=document.getElementById("role").value;
+ let p=document.getElementById("password").value;
+ if((r==="admin"&&p==="1111")||
+ (r==="cashier"&&p==="2222")){
+ currentRole=r;
+ document.getElementById("login").classList.add("hidden");
+ document.getElementById("app").classList.remove("hidden");
+ document.getElementById("adminAdd").style.display=
+ r==="admin"?"block":"none";
+ render();
+ }else alert("Рамз нодуруст аст!");
+}
+
+function logout(){
+ currentRole="";
+ document.getElementById("app").classList.add("hidden");
+ document.getElementById("login").classList.remove("hidden");
+ document.getElementById("password").value="";
+}
+
+function addPerson(){
+ if(currentRole!=="admin")return;
+ let n=document.getElementById("newName").value.trim();
+ if(!n)return alert("Номро нависед!");
+ people.push(n);
+ document.getElementById("newName").value="";
+ save();
+}
+
+function addIncome(){
+ let name=document.getElementById("person").value;
+ let amount=Number(document.getElementById("amount").value);
+ let desc=document.getElementById("description").value;
+ if(!name||amount<=0)return alert("Маълумотро дуруст ворид кунед!");
+ incomes.push({
+ name,amount,desc,
+ date:new Date().toLocaleString(),
+ by:currentRole
+ });
+ document.getElementById("amount").value="";
+ document.getElementById("description").value="";
+ save();
+}
+
+function addExpense(){
+ let amount=Number(document.getElementById("expenseAmount").value);
+ let reason=document.getElementById("expenseReason").value;
+ if(amount<=0||!reason)return alert("Маълумотро пур кунед!");
+ let total=incomes.reduce((s,x)=>s+x.amount,0);
+ let spent=expenses.reduce((s,x)=>s+x.amount,0);
+ if(amount>total-spent)return alert("Маблағи кофӣ нест!");
+ expenses.push({
+ amount,reason,date:new Date().toLocaleString()
+ });
+ document.getElementById("expenseAmount").value="";
+ document.getElementById("expenseReason").value="";
+ save();
+}
+
+function addReceipt(){
+ let name=document.getElementById("receiptPerson").value.trim();
+ let amount=Number(document.getElementById("receiptAmount").value);
+ let file=document.getElementById("receiptPhoto").files[0];
+ if(!name||amount<=0)return alert("Маълумотро пур кунед!");
+ let receipt={
+ id:Date.now(),name,amount,
+ date:new Date().toLocaleString(),
+ status:"pending",photo:""
+ };
+ if(file){
+ let reader=new FileReader();
+ reader.onload=function(){
+ receipt.photo=reader.result;
+ receipts.push(receipt);
+ save();
+ };
+ reader.readAsDataURL(file);
+ }else{
+ receipts.push(receipt);
+ save();
+ }
+ document.getElementById("receiptPerson").value="";
+ document.getElementById("receiptAmount").value="";
+ document.getElementById("receiptPhoto").value="";
+}
+
+function approve(id){
+ if(currentRole!=="admin")return;
+ let r=receipts.find(x=>x.id===id);
+ if(!r||r.status!=="pending")return;
+ r.status="approved";
+ incomes.push({
+ name:r.name,amount:r.amount,
+ desc:"Чеки тасдиқшуда",
+ date:new Date().toLocaleString(),
+ by:"admin"
+ });
+ save();
+}
+
+function reject(id){
+ if(currentRole!=="admin")return;
+ let r=receipts.find(x=>x.id===id);
+ if(r){r.status="rejected";save();}
+}
+
+function render(){
+ let totalIn=incomes.reduce((s,x)=>s+x.amount,0);
+ let totalOut=expenses.reduce((s,x)=>s+x.amount,0);
+ document.getElementById("totalIn").textContent=totalIn+" сомонӣ";
+ document.getElementById("totalOut").textContent=totalOut+" сомонӣ";
+ document.getElementById("balance").textContent=(totalIn-totalOut)+" сомонӣ";
+ document.getElementById("pending").textContent=
+ receipts.filter(x=>x.status==="pending").length;
+
+ document.getElementById("person").innerHTML=
+ people.map(n=>`<option>${escapeHTML(n)}</option>`).join("");
+
+ document.getElementById("people").innerHTML=
+ people.map(n=>{
+ let sum=incomes.filter(x=>x.name===n)
+ .reduce((s,x)=>s+x.amount,0);
+ return `<div class="item">
+ <b>${escapeHTML(n)}</b><br>
+ Бақия: ${sum} сомонӣ
+ ${currentRole==="admin"?
+ `<button class="red" onclick="removePerson('${encodeURIComponent(n)}')">Ҳазф</button>`:""}
+ </div>`;
+ }).join("")||"Ҳоло ҳамсинфон илова нашудаанд.";
+
+ document.getElementById("receipts").innerHTML=
+ receipts.map(r=>`
+ <div class="item">
+ <b>${escapeHTML(r.name)}</b> — ${r.amount} сомонӣ<br>
+ <span class="small">${escapeHTML(r.date)}</span><br>
+ Ҳолат: ${r.status==="pending"?"Интизори тасдиқ":
+ r.status==="approved"?"Тасдиқ шуд":"Рад карда шуд"}
+ ${r.photo?`<br><img src="${r.photo}" style="width:100%;max-width:200px">`:""}
+ ${currentRole==="admin"&&r.status==="pending"?
+ `<button onclick="approve(${r.id})">Тасдиқ</button>
+ <button class="red" onclick="reject(${r.id})">Рад кардан</button>`:""}
+ </div>`).join("")||"Чек нест.";
+
+ let h=[
+ ...incomes.map(x=>({...x,type:"Воридот"})),
+ ...expenses.map(x=>({...x,name:x.reason,type:"Хароҷот"}))
+ ];
+ document.getElementById("history").innerHTML=
+ h.reverse().map(x=>`
+ <div class="item">
+ ${x.type}: <b>${escapeHTML(x.name)}</b><br>
+ ${x.amount} сомонӣ<br>
+ <span class="small">${escapeHTML(x.date)}</span>
+ </div>`).join("")||"Амалиёт нест.";
+}
+
+function removePerson(encoded){
+ if(currentRole!=="admin")return;
+ let n=decodeURIComponent(encoded);
+ if(confirm("Ҳамсинфро ҳазф мекунед?")){
+ people=people.filter(x=>x!==n);
+ save();
+ }
+}
+
+function escapeHTML(s){
+ return String(s).replace(/[&<>"']/g,c=>({
+ "&":"&amp;","<":"&lt;",">":"&gt;",
+ '"':"&quot;","'":"&#39;"
+ })[c]);
+}
+</script>
+</body>
+</html>
